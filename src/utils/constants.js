@@ -11,6 +11,7 @@ const MAX_LOGIN_INCORRECT = 5
 // SHOP
 const SHOP_MANAGER = 1111
 const SHOP_COLLABORATOR = 2222
+const MAX_STAFF = 4
 
 const SHOP_ACTIVE = 'active'
 const SHOP_INACTIVE = 'inactive'
@@ -81,10 +82,14 @@ const DISCOUNT_TYPES = [
 
 
 // PRODUCT
+const CLOTHING_PRODUCT = 'Clothing'
+const ELECTRONIC_PRODUCT = 'Electronics'
+const FURNITURE_PRODUCT = 'Furniture'
+
 const CATEGORY_LIST = [
-    'Clothing',
-    'Electronics',
-    'Furniture'
+    CLOTHING_PRODUCT,
+    ELECTRONIC_PRODUCT,
+    FURNITURE_PRODUCT,
 ]
 
 // USER_ADDRESS 
@@ -179,5 +184,9 @@ module.exports = {
     FULL_PER,
     WRITE_PER,
     DELETE_PER,
-    EMAIL_REGEX
+    EMAIL_REGEX,
+    MAX_STAFF,
+    CLOTHING_PRODUCT,
+    ELECTRONIC_PRODUCT,
+    FURNITURE_PRODUCT,
 }

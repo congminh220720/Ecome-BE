@@ -36,14 +36,14 @@ const createTokenPair = async (payload, publicKey, privateKey) => {
 
 const authenticationV2 = asyncHandler( async (req,res,next) => {
     let decoded = {}
-    var privateKey = fs.readFileSync(process.env.JWT_PUBLIC_KEY_PATH)
+    var publicKey = fs.readFileSync(process.env.JWT_PUBLIC_KEY_PATH)
     let userToken = req.get(HEADER.AUTHORIZATION)
 
     if (!userToken) throw new AuthFailureError('Invalid Token')
     userToken = userToken.replace('Bearer ', '');
 
     try {
-        decoded = JWT.verify(userToken, privateKey)
+        decoded = JWT.verify(userToken, publicKey)
     } catch (e) {
         throw new AuthFailureError('Unauthorized')
     }    

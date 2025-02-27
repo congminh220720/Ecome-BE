@@ -4,10 +4,16 @@ const UserService = require('../services/user.service')
 
 class UserController {
     signin = async (req, res, next) => {
-        console.log(1)
         new CREATED({
             message: 'Registered OK !',
             metadata: await UserService.signin(req.body)
+        }).send(res)
+    }
+
+    saveUserAddress = async (req, res, next) => {
+        new CREATED({
+            message: 'Save success !',
+            metadata: await UserService.saveUserAddress(req.user._id,req.body)
         }).send(res)
     }   
 
@@ -32,10 +38,10 @@ class UserController {
         }).send(res)
     }  
 
-    getUser = async (req, res, next) => {
+    getUsers = async (req, res, next) => {
         new SuccessResponse({
             message: 'get user success',
-            metadata: await UserService.getUser(req.user._id)
+            metadata: await UserService.getUsers(req.user._id)
         }).send(res)
     }   
 
@@ -50,6 +56,27 @@ class UserController {
         new SuccessResponse({
             message: 'refresh token success',
             metadata: await UserService.refreshToken(req.user._id,req.body)
+        }).send(res)
+    }   
+
+    updateUserAddress = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Update address success',
+            metadata: await UserService.updateUserAddress(req.user._id,req.query.addressId,req.body)
+        }).send(res)
+    }   
+
+    getListUserAddress = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Ok',
+            metadata: await UserService.getListUserAddress(req.user._id)
+        }).send(res)
+    }   
+
+    removeUserAddress = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'remove address success',
+            metadata: await UserService.removeUserAddress(req.user._id,req.query.addressId)
         }).send(res)
     }   
 }

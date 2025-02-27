@@ -21,8 +21,10 @@ const userSchema = new Schema({
     name: {type: String, trim: true, maxLength: 150},
     email: {type: String, required: true, unique: true, index: true},
     password: {type: String, require: true},
+    phone: {type: Number, require: true},
     status: {type: String, enum: [USER_ACTIVE,USER_BE_BANED], default: USER_ACTIVE},
     contributors: {type: [contributorSchema], default: []},
+    contributorCount: {type: Number, default:0},
     isShopOwner: {type: Boolean, default: false},
     oldPasswords: {type: [String], default: []},
     changePasswordCount: { type: Number, default: 0},
@@ -30,7 +32,8 @@ const userSchema = new Schema({
     avatar: {type: String, default: ''},
     loginCount: {type: Number, default:0},
     incorrectLoginCount: {type: Number, default: 0},
-    orderCount: {type: Number, default: 0}
+    orderCount: {type: Number, default: 0},
+    followShopCount: {type: Number, default: 0}
 }, {
     collection: COLLECTION_NAME,
     timestamps: {

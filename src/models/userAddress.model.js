@@ -15,7 +15,7 @@ const userAddressSchema = new Schema({
     addressLine2: {type: String},
     city: { type: String, required: true },
     state: { type: String, required: true },
-    country: { type: String, required: true, default: DEFAULT_COUNTRY },
+    country: { type: String, default: DEFAULT_COUNTRY },
     postalCode: { type: String, required: true },
     isDefault: { type: Boolean, default: false } 
 },{
