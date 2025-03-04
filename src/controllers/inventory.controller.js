@@ -6,14 +6,14 @@ class InventoryController {
     addStockByAdmin = async (req, res, next) => {
         new SuccessResponse({
             message: 'Update success !',
-            metadata: await InventoryService.addStockByAdmin(req.user._id,req.body)
+            metadata: await InventoryService.addStockByAdmin(req.user._id,req.query.productId,req.body)
         }).send(res)
     }   
 
     subtractStockByAdmin = async (req, res, next) => {
         new SuccessResponse({
             message: 'Update success',
-            metadata: await InventoryService.subtractStockByAdmin(req.user._id,req.body)
+            metadata: await InventoryService.subtractStockByAdmin(req.user._id,req.query.productId,req.body)
         }).send(res)
     }   
 

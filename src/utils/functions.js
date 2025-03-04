@@ -57,6 +57,10 @@ const getUnSelectData = (select = []) => {
     return Object.fromEntries(select.map(el => [el, 0]))
 }
 
+function calculatePercentage(value, percent) {
+    return (percent / 100) * value;
+}
+
 module.exports = {
     convertToObjectId,
     removeUndefinedObject,
@@ -64,5 +68,6 @@ module.exports = {
     validateEmail,
     updateNestedObjectParser,
     getSelectData,
-    getUnSelectData
+    getUnSelectData,
+    calculatePercentage
 }

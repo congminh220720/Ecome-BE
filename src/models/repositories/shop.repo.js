@@ -17,6 +17,10 @@ const getShopByUserId = async (userId) => {
   return await shopDB.findOne({ ownerId: userId }).lean();
 };
 
+const getMyShop = async (userId) => {
+  return await shopDB.find({ownerId:userId }).lean()
+}
+
 const getShopById = async (shopId) => {
   const shop = await shopDB.findById(shopId).lean()
   return removeFiledNotNeedShop(shop)
@@ -67,12 +71,16 @@ const subtractFollowerCount = async (shopId) => {
 }
 
 const findShopByIdAndUserId = async (id,ownerId) => {
-  return await shopDB.findOne({_id:id, ownerId:ownerId}).lean()
+  return await shopDB.findOne({_id:id, ownerId}).lean()
 }
 
 const getShopWithStaff = async (shopId, userId) => {
       const shop = await shopDB.findOne({ _id: shopId, "staffs.userId": userId }).lean();
       return !!shop;
+}
+
+const listShopContributor = async (userId) => {
+  return shopDB.find({ "staffs.userId": userId }).lean().exec();
 }
 
 
@@ -87,5 +95,7 @@ module.exports = {
   removeFiledNotNeedShop,
   findShopByIdAndUserId,
   getShopByIdToCheck,
-  getShopWithStaff
+  getShopWithStaff,
+  getMyShop,
+  listShopContributor
 }

@@ -71,7 +71,21 @@ class ShopController {
             message: 'success',
             metadata: await ShopService.unFollowShop(req.user._id,req.body)
         }).send(res)
-    } 
+    }
+
+    listMyShop = async (req,res,next) => {
+        new SuccessResponse({
+            message: 'success',
+            metadata: await ShopService.listMyShop(req.user._id)
+        }).send(res)
+    }
+
+    listShopContributor = async (req,res,next) => {
+        new SuccessResponse({
+            message:'Success !',
+            metadata: await ShopService.listShopContributor(req.user._id)
+        })
+    }
 
 }
 

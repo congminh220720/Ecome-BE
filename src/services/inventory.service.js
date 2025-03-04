@@ -27,6 +27,7 @@ class InventoryService {
             $push: { history: {
                 reason: `payment order ${orderId}`,
                 action: INVENTORY_ACTION_EXPORT,
+                oldStock: inventory.stock,
                 quantity: stock,
                 date: Date.now
             }}
@@ -49,8 +50,9 @@ class InventoryService {
             $push: { history: {
                 reason: `Return order ${orderId}`,
                 action: INVENTORY_ACTION_EXPORT,
+                oldStock: inventory.stock,
                 quantity: stock,
-                date: Date.now
+                date: new Date()
             }}
         }
 
@@ -70,15 +72,16 @@ class InventoryService {
             $push: { history: {
                 reason: `Cancel order ${orderId}`,
                 action: INVENTORY_ACTION_EXPORT,
+                oldStock: inventory.stock,
                 quantity: stock,
-                date: Date.now
+                date: new Date()
             }}
         }
 
         return await updateInventory(query, update)
     }
 
-    static async addStockByAdmin (userId ,{productId, stock}) {
+    static async addStockByAdmin (userId,productId,{stock, shopId}) {
         const convertProductId = convertToObjectId(productId)
         const inventory = await getInventoryByProductId(convertProductId)
         if (!inventory) throw new BadRequestError('Not found inventory for This product')
@@ -94,15 +97,18 @@ class InventoryService {
             $push: { history: {
                 reason: `Add stock by shop`,
                 action: INVENTORY_ACTION_IMPORT,
+                oldStock: inventory.stock,
                 quantity: stock,
-                date: Date.now
+                date: new Date()
             }}
         }
+
+        console.log(update)
         
         return await updateInventory(query, update)
     }
 
-    static async subtractStockByAdmin (userId,{productId,stock}) {
+    static async subtractStockByAdmin (userId,productId,{stock, shopId}) {
         const convertProductId = convertToObjectId(productId)
         const inventory = await getInventoryByProductId(convertProductId)
         if (!inventory) throw new BadRequestError('Not found inventory for This product')
@@ -118,15 +124,16 @@ class InventoryService {
             $push: { history: {
                 reason: `subtract stock by shop`,
                 action: INVENTORY_ACTION_EXPORT,
+                oldStock: inventory.stock,
                 quantity: stock,
-                date: Date.now
+                date: new Date()
             }}
         }
             
             return await updateInventory(query, update)
     }
 
-    static async updateInventory (userId, productId,{reserved,lowStockThreshold, status, location}) {
+    static async updateInventory (userId, productId,{reserved,lowStockThreshold, status, location, shopId}) {
         const convertProductId = convertToObjectId(productId)
         const inventory = await getInventoryByProductId(convertProductId)
         if (!inventory) throw new BadRequestError('Not found inventory for This product')

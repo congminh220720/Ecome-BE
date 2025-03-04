@@ -19,5 +19,8 @@ router.get('/getStaffs', asyncHandler(ShopController.getStaff))
 router.post('/follow', asyncHandler(ShopController.followShop))
 router.post('/unFollow', asyncHandler(ShopController.unFollowShop))
 router.patch('/updateStaff', asyncHandler(ShopController.updateStaff))
+router.get('/listMyShop', asyncHandler(ShopController.listMyShop))
+router.get('/listShopContribute', asyncHandler(ShopController.listShopContributor))
+
 
 module.exports = router

@@ -14,7 +14,9 @@ const {
         subtractFollowerCount, 
         removeFiledNotNeedShop, 
         findShopByIdAndUserId,
-        findFollowers 
+        findFollowers,
+        getMyShop,
+        listShopContributor
     } = require('../models/repositories/shop.repo')
 const { addFollowShopCount, subtractFollowShopCount, getUserById } = require('../models/repositories/user.repo')
 
@@ -274,6 +276,19 @@ class ShopService {
         await subtractFollowerCount(shopId)
         await subtractFollowShopCount(userId)
         return {}
+    }
+
+    static async listMyShop (userId) {
+        return await getMyShop(convertToObjectId(userId))
+    }
+
+    static async listShopContributor (userId) {
+        return await listShopContributor(convertToObjectId(userId))
+    }
+
+    static async deleteShop (shopId) {
+        // update later 
+        // check order when delete
     }
 }
 

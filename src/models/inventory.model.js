@@ -18,14 +18,18 @@ const inventorySchema = new Schema({
         type: String, 
         default: 'Warehouse' // warehouse location
     },
-    history: [
-        {   
-            reason: {type: String, required: true},
-            action: { type: String, enum: INVENTORY_ACTION, required: true },
-            quantity: { type: Number, required: true },
-            date: { type: Date, default: Date.now }
-        }
-    ]
+    history: {
+        type: [
+            {   
+                oldStock: { type: Number, required: true},
+                reason: {type: String, required: true},
+                action: { type: String, enum: INVENTORY_ACTION, required: true },
+                quantity: { type: Number, required: true },
+                date: { type: Date, default: Date.now }
+            }
+        ],
+        default: []
+    }
 
 },{
     collection: COLLECTION_NAME,

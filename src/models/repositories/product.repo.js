@@ -89,6 +89,11 @@ const findProduct = async ({ productId, unSelect }) => {
     return await productDB.findById(productId).select(getUnSelectData(unSelect))
 }
 
+const getProductByListId = async (productIds, select) => {
+    if (select.length) return await productDB.find({_id: {$in:productIds}}).lean()
+    return await productDB.find({_id: {$in:productIds}}).select(getSelectData(select)).lean()
+}
+
 module.exports = {
     updateProductById,
     findProductById,
@@ -99,4 +104,5 @@ module.exports = {
     searchProductByUser,
     findAllProducts,
     findProduct,
+    getProductByListId
 }

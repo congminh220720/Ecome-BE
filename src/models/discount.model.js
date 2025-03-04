@@ -10,7 +10,7 @@ const discountSchema = new Schema({
     name: {type: String, required: true },
     description: String,
     code: {type: String, required: true, unique: true, index: true},
-    type: {type: String, enum: DISCOUNT_TYPES.map(e => e), default: DISCOUNT_FIXED_AMOUNT},
+    type: {type: String, enum: DISCOUNT_TYPES, default: DISCOUNT_FIXED_AMOUNT},
     value: {type: Number, required: true},
     maxValue: {type: Number, required: true},
     startDay: {type: Date, required: true},
