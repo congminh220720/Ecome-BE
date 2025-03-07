@@ -79,7 +79,8 @@ class CartService {
         const query = {
             userId: convertToObjectId(userId)
         }, update = {
-            $set: { items: []}
+            $set: { items: []},
+            totalPrice: 0
         }, options = {
             new: true,
         }  
@@ -115,8 +116,9 @@ class CartService {
             new: true
         }
            
-        const newCart = await cartDB.findOneAndUpdate(query,update,options)
-        return newCart.toObject()
+        let newCart = await cartDB.findOneAndUpdate(query,update,options)
+        newCart = newCart.toObject()
+        return newCart
         
     }
 

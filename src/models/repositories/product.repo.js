@@ -90,8 +90,12 @@ const findProduct = async ({ productId, unSelect }) => {
 }
 
 const getProductByListId = async (productIds, select) => {
-    if (select.length) return await productDB.find({_id: {$in:productIds}}).lean()
+    if (select?.length) return await productDB.find({_id: {$in:productIds}}).lean()
     return await productDB.find({_id: {$in:productIds}}).select(getSelectData(select)).lean()
+}
+
+const getUrlProductById = async (productId) => {
+    return await productDB.findById(productId).select('adsPicture').lean()
 }
 
 module.exports = {
@@ -104,5 +108,6 @@ module.exports = {
     searchProductByUser,
     findAllProducts,
     findProduct,
-    getProductByListId
+    getProductByListId,
+    getUrlProductById
 }

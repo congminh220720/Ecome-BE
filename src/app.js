@@ -18,6 +18,7 @@ app.use(express.urlencoded({extended: true}))
 
 
 require('./db/init.mongodb')
+require('./db/init.redis')
 
 // init routes
 app.use('/', require('./routers/index'))

@@ -7,17 +7,16 @@ const COLLECTION_NAME = 'Carts'
 const DOCUMENT_NAME = 'Cart'
 
 
-const itemSchema = new Schema({
-    shopId: {type: Schema.Types.ObjectId, ref: 'Shop', required: true},
-    productId: {type: Schema.Types.ObjectId, ref: 'Product'},
-    quantity: {type: Number, required: true, min: 0},
-    price: {type: Number, required: true, min:0},
-})
-
-
 const cartSchema = new Schema({
     userId: {type: Schema.Types.ObjectId, ref: 'User' ,required: true},
-    items: {type: [itemSchema], default: []},
+    items: {type: [
+        {
+            shopId: {type: Schema.Types.ObjectId, ref: 'Shop', required: true},
+            productId: {type: Schema.Types.ObjectId, ref: 'Product'},
+            quantity: {type: Number, required: true, min: 0},
+            price: {type: Number, required: true, min:0},
+        }
+    ],_id: false, default: []},
     totalPrice: {type: Number, required: true},
     status: { type: String, enum:CART_STATES, default: CART_STATE_PENDING }
 }, {

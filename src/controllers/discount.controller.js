@@ -13,7 +13,7 @@ class DiscountController {
     updateDiscount = async (req, res, next) => {
         new SuccessResponse({
             message: 'Update success',
-            metadata: await DiscountService.updateDiscount(req.user._id, req.query.shopId,req.body)
+            metadata: await DiscountService.updateDiscount(req.user._id, req.query.shopId, req.query.id,req.body)
         }).send(res)
     }   
 

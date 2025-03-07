@@ -2,29 +2,12 @@
 const { discountDB } = require('../models/discount.model')
 const { BadRequestError } = require('../core/error.response')
 const { getUserById } = require('../models/repositories/user.repo')
-const { listDiscountByProductId, listDiscountByShopId, getCodeDetail, geDiscountByListShop, getCodeByShopIdAndCode, switchDiscount } = require('../models/repositories/discount.repo')
+const { listDiscountByProductId, listDiscountByShopId, getCodeDetail, geDiscountByListShop, getCodeByShopIdAndCode, switchDiscount, getCodeByShopIdAndId } = require('../models/repositories/discount.repo')
 const { findShopByIdAndUserId, getShopById } = require('../models/repositories/shop.repo')
 const { getProductByListId } = require('../models/repositories/product.repo')
 const { getCartById } = require('../models/repositories/cart.repo')
 const { removeUndefinedObject, calculatePercentage } = require('../utils/functions')
-const {  DISCOUNT_FIXED_AMOUNT,DISCOUNT_APPLY_ALL,DISCOUNT_APPLY_SPECIFIC, DISCOUNT_PERCENT} = require('../utils/constants')
-
-
-/*
-    -> create discount {name, description, code, type, value, maxValue, startDay, endDay, maxUse, minOrderValue, maxUserPerUse, productIds =[], shopId, isActive = true, applies }
-        check codeName is exists -> query by shopId,
-    -> Update discount {name, description, code, type, value, maxValue, startDay, endDay, maxUse, minOrderValue,maxUserPerUse, productIds =[],isActive,applies}
-        check code name is exists yet ?,query by shopId, check Is active
-    -> active discount -> check code name is exists yet ?
-    -> inactive discount -> check code name is exists yet ?
-
-    -> get list discount by shopId
-    -> get discount by product id
-    -> get discount detail by code id
-    -> apply code 
-        
-*/
-
+const {  DISCOUNT_FIXED_AMOUNT,DISCOUNT_APPLY_ALL, DISCOUNT_PERCENT} = require('../utils/constants')
 
 class DiscountService {
     static async createDiscount(userId, {name, description, code, type, value, maxValue, startDay, endDay, maxUse, minOrderValue, maxUserPerUse, productIds =[], shopId, isActive = true, applies }) {
@@ -37,16 +20,21 @@ class DiscountService {
         }
 
         if (type === DISCOUNT_PERCENT) if (value > 100) throw new BadRequestError('Not greater than 100%')
+
+        if (productIds.length) {
+            const products = await getProductByListId(productIds)
+            if (productIds.length !== products.length) throw new BadRequestError('Some item not exists')
+        }
     
         const newDiscount =  {name, description, code, type, value, maxValue, startDay, endDay, maxUse, minOrderValue, maxUserPerUse, productIds, shopId, isActive, applies }
         const discount = await discountDB.create(newDiscount)
         return discount.toObject()
     }
 
-    static async updateDiscount(userId, shopId, {name, description, code, type, value, maxValue, startDay, endDay, maxUse, minOrderValue, maxUserPerUse, productIds, isActive, applies }) {
+    static async updateDiscount(userId, shopId, discountId, {name, description, code, type, value, maxValue, startDay, endDay, maxUse, minOrderValue, maxUserPerUse, productIds, isActive, applies }) {
         if (!await findShopByIdAndUserId(shopId, userId)) throw new BadRequestError('You are not admin this shop')
         
-        const discount = await getCodeByShopIdAndCode({shopId,code})
+        const discount = await getCodeByShopIdAndId({shopId,discountId})
         if (!discount) throw new BadRequestError('This code is not exists !')
             
         if (startDay && endDay) {
@@ -94,76 +82,145 @@ class DiscountService {
     static async applyDiscount(userId,{cartId, code}) {
         if (!await getUserById(userId)) throw new BadRequestError('User not found')
         const cart = await getCartById(cartId)
-
+        if (!cart) throw new BadRequestError('Cart not found')
         const shopIds = cart.items.map(i => i.shopId)
 
         const discount = await geDiscountByListShop({code, shopIds})
         if (!discount.isActive) throw new BadRequestError('code is inactive')
 
         if (new Date(discount.startDay) > new Date()) throw new BadRequestError('Code not started yet !')   
-        if (!new Date(discount.endDay) > new Date()) throw new BadRequestError('Code is expired')
+        if (new Date(discount.endDay) <= new Date())  throw new BadRequestError('Code is expired')
         if (discount.useCount >= discount.maxUse) throw new BadRequestError('use out')
 
         const userUsedCount = discount.userUsed.filter(i => i.toString() === userId)
-        if (userUsedCount >= discount.maxUserPerUse) throw new BadRequestError(`You just use ${discount.maxUserPerUse} for this code`)
+        if (userUsedCount.length >= discount.maxUserPerUse) throw new BadRequestError(`You just use ${discount.maxUserPerUse} for this code`)
 
         const itemByShopId = cart.items.filter(i => i.shopId.toString() === discount.shopId.toString())
 
-        const productIds = itemByShopId.map(i => i.productId)
+        const productIds = itemByShopId.map(i => i.productId.toString())
         const select = ['productName', 'price', '_id']
 
         const productIdsByCart = await getProductByListId(productIds,select)
 
         // update price of product if that product be updated
+        let totalPriceForProductOfShop = 0
         const newItems = cart.items.map(i => {
-            const product = productIdsByCart.find(p => p._id.toString() === i.productId);
+            const product = productIdsByCart.find(p => p._id.toString() === i.productId.toString());
+            if (product) totalPriceForProductOfShop += product.price * i.quantity
             return product ? { ...i, price: product.price } : i;
-        });
+        })
 
-
-        let totalPriceForProductOfShop = newItems.reduce((total, i) => total + (i.price * i.quantity), 0)
-        if (!totalPriceForProductOfShop > discount.minOrderValue) {
+        if (totalPriceForProductOfShop <= discount.minOrderValue) {
             const shop = await getShopById(discount.shopId)
             throw new BadRequestError(`min value for product of shop' ${shop.shopName}`)
         }
 
-        // let totalValueDiscount = 0
-
-        // if (discount.applies === DISCOUNT_APPLY_ALL) {
-        //     if (discount.type === DISCOUNT_FIXED_AMOUNT) {
-        //         totalValueDiscount = totalPriceForProductOfShop - discount.value
-        //     } else {
-        //         totalValueDiscount = calculatePercentage(totalPriceForProductOfShop,discount.value) 
-        //     }
-        // } else {
-        //     if (discount.type === DISCOUNT_FIXED_AMOUNT) {
-        //         totalValueDiscount = productIdsByCart.price - discount.value
-        //     } else {
-        //         totalValueDiscount = calculatePercentage(productIdsByCart.price,discount.value) 
-        //     }
-        // }
-
-        // // update price of product if that product be updated
-        // const newItems = cart.items.map(i => {
-        //     if (productIds.includes(i.productId)) return {
-        //         ...i,
-        //         price: productIdsByCart.find(i => i._id.toString === i.productId).price
-        //     } 
-        //     return i
-        // })
-
-
-        // new version
         let totalValueDiscount = 0
-        const discountBaseValue = discount.applies === DISCOUNT_APPLY_ALL ? totalPriceForProductOfShop : productIdsByCart.price;
-     
-        totalValueDiscount = discount.type === DISCOUNT_FIXED_AMOUNT ? discountBaseValue - discount.value : calculatePercentage(discountBaseValue, discount.value)
-        totalValueDiscount = totalValueDiscount > discount.maxValue ? discount.maxValue : totalValueDiscount
+        const discountBaseValue = discount.applies === DISCOUNT_APPLY_ALL
+        ? totalPriceForProductOfShop
+        : productIdsByCart.reduce((total, p) => 
+            total + (discount.productIds.some(id => id.toString() === p._id.toString()) 
+                ? (newItems.find(i => i.productId.toString() === p._id.toString())?.quantity || 0) * p.price 
+                : 0)
+        , 0);
+    
 
+        totalValueDiscount = discount.type === DISCOUNT_FIXED_AMOUNT ? discountBaseValue - discount.value : calculatePercentage(discountBaseValue, discount.value)
+        if (totalValueDiscount > discount.maxValue) {
+            totalValueDiscount = discount.maxValue;
+        }
+
+        let productInCartCount = discount.applies === DISCOUNT_APPLY_ALL
+        ? newItems.filter(i => productIds.includes(i.productId)).length
+        : discount.productIds.filter(pid => productIds.includes(pid.toString())).length;
+
+        let totalValueDiscountShare = totalValueDiscount / productInCartCount;
+
+        const newItemShare = newItems.map(i => {
+            const isDiscounted = discount.applies === DISCOUNT_APPLY_ALL
+                ? true
+                : discount.productIds.some(pid => pid.toString() === i.productId.toString()); // Chỉ giảm giá cho sản phẩm trong danh sách
+        
+            return isDiscounted ? { ...i, discount: totalValueDiscountShare } : i;
+        })
+        
         return {
             cart: {
                 ...cart,
-                items: newItems,
+                items: newItemShare,
+                totalPrice: cart.totalPrice - totalValueDiscount 
+            },
+            discountAmount: totalValueDiscount
+        }
+    }
+
+    static async checkDiscountForServer(userId,{cart, code}) {
+        if (!await getUserById(userId)) throw new BadRequestError('User not found')
+        const shopIds = cart.items.map(i => i.shopId)
+
+        const discount = await geDiscountByListShop({code, shopIds})
+        if (!discount.isActive) throw new BadRequestError('code is inactive')
+
+        if (new Date(discount.startDay) > new Date()) throw new BadRequestError('Code not started yet !')   
+        if (new Date(discount.endDay) <= new Date())  throw new BadRequestError('Code is expired')
+        if (discount.useCount >= discount.maxUse) throw new BadRequestError('use out')
+
+        const userUsedCount = discount.userUsed.filter(i => i.toString() === userId)
+        if (userUsedCount.length >= discount.maxUserPerUse) throw new BadRequestError(`You just use ${discount.maxUserPerUse} for this code`)
+
+        const itemByShopId = cart.items.filter(i => i.shopId.toString() === discount.shopId.toString())
+
+        const productIds = itemByShopId.map(i => i.productId.toString())
+        const select = ['productName', 'price', '_id']
+
+        const productIdsByCart = await getProductByListId(productIds,select)
+
+        // update price of product if that product be updated
+        let totalPriceForProductOfShop = 0
+        const newItems = cart.items.map(i => {
+            const product = productIdsByCart.find(p => p._id.toString() === i.productId.toString());
+            if (product) totalPriceForProductOfShop += product.price * i.quantity
+            return product ? { ...i, price: product.price } : i;
+        })
+
+        if (totalPriceForProductOfShop <= discount.minOrderValue) {
+            const shop = await getShopById(discount.shopId)
+            throw new BadRequestError(`min value for product of shop' ${shop.shopName}`)
+        }
+
+        let totalValueDiscount = 0
+        const discountBaseValue = discount.applies === DISCOUNT_APPLY_ALL
+        ? totalPriceForProductOfShop
+        : productIdsByCart.reduce((total, p) => 
+            total + (discount.productIds.some(id => id.toString() === p._id.toString()) 
+                ? (newItems.find(i => i.productId.toString() === p._id.toString())?.quantity || 0) * p.price 
+                : 0)
+        , 0);
+    
+
+        totalValueDiscount = discount.type === DISCOUNT_FIXED_AMOUNT ? discountBaseValue - discount.value : calculatePercentage(discountBaseValue, discount.value)
+        if (totalValueDiscount > discount.maxValue) {
+            totalValueDiscount = discount.maxValue;
+        }
+
+        let productInCartCount = discount.applies === DISCOUNT_APPLY_ALL
+        ? newItems.filter(i => productIds.includes(i.productId)).length
+        : discount.productIds.filter(pid => productIds.includes(pid.toString())).length;
+
+        let totalValueDiscountShare = totalValueDiscount / productInCartCount;
+
+        const newItemShare = newItems.map(i => {
+            const isDiscounted = discount.applies === DISCOUNT_APPLY_ALL
+                ? true
+                : discount.productIds.some(pid => pid.toString() === i.productId.toString()); // Chỉ giảm giá cho sản phẩm trong danh sách
+        
+            return isDiscounted ? { ...i, discount: totalValueDiscountShare } : i;
+        })
+        
+        return {
+            cart: {
+                ...cart,
+                items: newItemShare,
                 totalPrice: cart.totalPrice - totalValueDiscount 
             },
             discountAmount: totalValueDiscount

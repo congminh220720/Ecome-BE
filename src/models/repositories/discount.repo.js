@@ -1,7 +1,7 @@
 const { discountDB } = require('../discount.model')
 const { getUnSelectData } = require('../../utils/functions')
 
-const unSelect = ['useCount','updatedAt','__v','userUsed']
+const unSelect = ['updatedAt','__v','userUsed']
 
 const listDiscountByProductId = async (productId) => {
     return await discountDB.find({
@@ -34,11 +34,22 @@ const getCodeByShopIdAndCode = async ({shopId,code}) => {
     }).select(getUnSelectData(unSelect)).lean()
 }
 
+const getCodeByShopIdAndId = async ({shopId,discountId}) => {
+    return await discountDB.findOne({
+        shopId,
+        _id:discountId
+    }).select(getUnSelectData(unSelect)).lean()
+}
+
 const geDiscountByListShop = async ({code, shopIds}) => {
     return await discountDB.findOne({
         code,
         shopId: {$in: shopIds }
     }).lean()
+}
+
+const getListDiscountByListCode = async (codes) => {
+    return await discountDB.find({code: {$in: codes}}).select(getUnSelectData(unSelect)).lean()
 }
 
 module.exports = {
@@ -47,6 +58,8 @@ module.exports = {
     getCodeDetail,
     switchDiscount,
     getCodeByShopIdAndCode,
-    geDiscountByListShop
+    geDiscountByListShop,
+    getListDiscountByListCode,
+    getCodeByShopIdAndId
 }
 
